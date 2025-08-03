@@ -1,6 +1,7 @@
 # LiberZMQ
 
 一个基于ZeroMQ的高级Python消息传递库，提供简单易用的API来实现各种消息模式。
+pyzmq项目地址: [pyzmq](https://github.com/zeromq/pyzmq)
 
 ## 特性
 
