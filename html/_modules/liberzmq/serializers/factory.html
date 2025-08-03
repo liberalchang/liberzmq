@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>liberzmq.serializers.factory &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=9a98c4c4" />
+    <script src="../../../_static/documentation_options.js?v=34088549"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liber&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">性能指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">高级用法</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">核心模块 (liberzmq.core)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">模块代码</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>liberzmq.serializers.factory 源代码</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">序列化器工厂模块</span>
+
+<span class="sd">提供序列化器的创建、注册和管理功能。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.json_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.binary_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinarySerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.protobuf_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProtobufSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..exceptions.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..logging.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SerializerFactory">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SerializerFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;序列化器工厂类</span>
+<span class="sd">    </span>
+<span class="sd">    负责创建、注册和管理各种序列化器。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="SerializerFactory.__init__">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.__init__">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;初始化序列化器工厂&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseSerializer</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="c1"># 注册内置序列化器</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_builtin_serializers</span><span class="p">()</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;序列化器工厂初始化完成&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_builtin_serializers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册内置序列化器&quot;&quot;&quot;</span>
+        <span class="c1"># 注册JSON序列化器</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="n">JSONSerializer</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;ensure_ascii&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;indent&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;use_custom_encoder&quot;</span><span class="p">:</span> <span class="kc">True</span>
+        <span class="p">})</span>
+        
+        <span class="c1"># 注册二进制序列化器</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;binary&quot;</span><span class="p">,</span> <span class="n">BinarySerializer</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;use_compression&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;compression_level&quot;</span><span class="p">:</span> <span class="mi">6</span>
+        <span class="p">})</span>
+        
+        <span class="c1"># 注册Protobuf序列化器</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;protobuf&quot;</span><span class="p">,</span> <span class="n">ProtobufSerializer</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;validate_message&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;use_json_fallback&quot;</span><span class="p">:</span> <span class="kc">True</span>
+        <span class="p">})</span>
+        
+        <span class="c1"># 添加别名</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">[</span><span class="s2">&quot;pb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ProtobufSerializer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">[</span><span class="s2">&quot;pickle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BinarySerializer</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;内置序列化器注册完成&quot;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="SerializerFactory.register">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.register">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                 <span class="n">serializer_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">],</span> 
+                 <span class="n">default_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册序列化器</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            serializer_class: 序列化器类</span>
+<span class="sd">            default_config: 默认配置</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">serializer_class</span><span class="p">,</span> <span class="n">BaseSerializer</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;序列化器类必须继承自BaseSerializer: </span><span class="si">{</span><span class="n">serializer_class</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">serializer_class</span>
+        
+        <span class="k">if</span> <span class="n">default_config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">default_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;注册序列化器: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.unregister">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.unregister">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注销序列化器</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;注销序列化器: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.create">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.create">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+               <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+               <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseSerializer</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;创建序列化器实例</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            config: 配置参数</span>
+<span class="sd">            cache: 是否缓存实例</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            BaseSerializer: 序列化器实例</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ConfigurationError: 序列化器不存在或创建失败</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">:</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;未知的序列化器: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">，可用的序列化器: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">config_key</span><span class="o">=</span><span class="s2">&quot;serializer&quot;</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># 如果启用缓存且已有实例，直接返回</span>
+        <span class="k">if</span> <span class="n">cache</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;返回缓存的序列化器实例: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        
+        <span class="c1"># 合并配置</span>
+        <span class="n">final_config</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">:</span>
+            <span class="n">final_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">final_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">serializer_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="n">serializer_class</span><span class="p">(</span><span class="o">**</span><span class="n">final_config</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">instance</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;创建序列化器实例: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">instance</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;创建序列化器失败: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, 错误: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">config_key</span><span class="o">=</span><span class="s2">&quot;serializer&quot;</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.get_instance">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.get_instance">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取缓存的序列化器实例</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[BaseSerializer]: 序列化器实例，如果不存在则返回None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.list_serializers">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.list_serializers">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_serializers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;列出所有注册的序列化器</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Type[BaseSerializer]]: 序列化器名称到类的映射</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.get_default_config">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.get_default_config">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取序列化器的默认配置</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[Dict[str, Any]]: 默认配置，如果不存在则返回None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.set_default_config">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.set_default_config">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_default_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;设置序列化器的默认配置</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            config: 默认配置</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;序列化器不存在: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="c1"># 如果有缓存的实例，清除它</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;设置序列化器默认配置: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.clear_cache">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.clear_cache">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;清除缓存的序列化器实例</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称，如果为None则清除所有缓存</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;清除序列化器缓存: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;清除所有序列化器缓存&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.get_info">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.get_info">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取工厂信息</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: 工厂信息</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;registered_serializers&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_serializers</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="s2">&quot;cached_instances&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="s2">&quot;default_configs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_configs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="SerializerFactory.validate_serializer">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.SerializerFactory.validate_serializer">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_serializer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">test_data</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证序列化器是否可用</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: 序列化器名称</span>
+<span class="sd">            test_data: 测试数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: 序列化器是否可用</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">test_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># 测试序列化和反序列化</span>
+                <span class="n">serialized</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+                <span class="n">deserialized</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;序列化器验证成功: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># 只测试创建</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;序列化器创建成功: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+                
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;序列化器验证失败: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, 错误: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<span class="c1"># 全局序列化器工厂实例</span>
+<span class="n">_global_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SerializerFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="get_factory">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.get_factory">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SerializerFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取全局序列化器工厂实例</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        SerializerFactory: 序列化器工厂实例</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_global_factory</span>
+    <span class="k">if</span> <span class="n">_global_factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_global_factory</span> <span class="o">=</span> <span class="n">SerializerFactory</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_global_factory</span></div>
+
+
+
+<div class="viewcode-block" id="get_serializer">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.get_serializer">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_serializer</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                   <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseSerializer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取序列化器实例（便捷函数）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        name: 序列化器名称</span>
+<span class="sd">        config: 配置参数</span>
+<span class="sd">        cache: 是否缓存实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        BaseSerializer: 序列化器实例</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="n">get_factory</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">factory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="register_serializer">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.register_serializer">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_serializer</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                       <span class="n">serializer_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">],</span>
+                       <span class="n">default_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;注册序列化器（便捷函数）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        name: 序列化器名称</span>
+<span class="sd">        serializer_class: 序列化器类</span>
+<span class="sd">        default_config: 默认配置</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="n">get_factory</span><span class="p">()</span>
+    <span class="n">factory</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">serializer_class</span><span class="p">,</span> <span class="n">default_config</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="list_available_serializers">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.list_available_serializers">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_available_serializers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseSerializer</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;列出可用的序列化器（便捷函数）</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, Type[BaseSerializer]]: 可用的序列化器</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="n">get_factory</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">factory</span><span class="o">.</span><span class="n">list_serializers</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="validate_all_serializers">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.factory.validate_all_serializers">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_all_serializers</span><span class="p">(</span><span class="n">test_data</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;验证所有序列化器（便捷函数）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        test_data: 测试数据</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, bool]: 验证结果</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="n">get_factory</span><span class="p">()</span>
+    <span class="n">serializers</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">list_serializers</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">test_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">test_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;number&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}</span>
+    
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">serializers</span><span class="p">:</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">validate_serializer</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">results</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+    </div>
+
+    
+    <a href="https://github.com/liber/liberzmq" class="github">
+        <img src="../../../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

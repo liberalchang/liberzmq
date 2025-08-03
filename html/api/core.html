@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>核心模块 (liberzmq.core) &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=9a98c4c4" />
+    <script src="../_static/documentation_options.js?v=34088549"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="消息模式 (liberzmq.patterns)" href="patterns.html" />
+    <link rel="prev" title="高级用法" href="../advanced.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liberalchang&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">性能指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced.html">高级用法</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">核心模块 (liberzmq.core)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-liberzmq.core.config">配置管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">异常处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-liberzmq.core.base">基础类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../advanced.html" title="上一章">高级用法</a></li>
+      <li>Next: <a href="patterns.html" title="下一章">消息模式 (liberzmq.patterns)</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="liberzmq-core">
+<h1>核心模块 (liberzmq.core)<a class="headerlink" href="#liberzmq-core" title="Link to this heading">¶</a></h1>
+<p>核心模块提供了LiberZMQ的基础功能，包括配置管理和异常处理。</p>
+<section id="module-liberzmq.core.config">
+<span id="id1"></span><h2>配置管理<a class="headerlink" href="#module-liberzmq.core.config" title="Link to this heading">¶</a></h2>
+<p>配置管理模块</p>
+<p>提供全局配置管理功能，支持从文件、环境变量等多种方式加载配置。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">ZMQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">io_threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sockets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_water_mark</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#ZMQConfig"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.ZMQConfig" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>ZeroMQ相关配置</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.io_threads">
+<span class="sig-name descname"><span class="pre">io_threads</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.io_threads" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.max_sockets">
+<span class="sig-name descname"><span class="pre">max_sockets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.max_sockets" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.socket_timeout">
+<span class="sig-name descname"><span class="pre">socket_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.socket_timeout" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.linger">
+<span class="sig-name descname"><span class="pre">linger</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.linger" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.send_timeout">
+<span class="sig-name descname"><span class="pre">send_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.send_timeout" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.high_water_mark">
+<span class="sig-name descname"><span class="pre">high_water_mark</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.high_water_mark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.ZMQConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#liberzmq.core.config.ZMQConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">LoggingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%(asctime)s</span> <span class="pre">-</span> <span class="pre">%(name)s</span> <span class="pre">-</span> <span class="pre">%(levelname)s</span> <span class="pre">-</span> <span class="pre">%(message)s'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_file_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10485760</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">console_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#LoggingConfig"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.LoggingConfig" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>日志配置</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.level">
+<span class="sig-name descname"><span class="pre">level</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.level" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.format">
+<span class="sig-name descname"><span class="pre">format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.file_path">
+<span class="sig-name descname"><span class="pre">file_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.file_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.max_file_size">
+<span class="sig-name descname"><span class="pre">max_file_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.max_file_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.backup_count">
+<span class="sig-name descname"><span class="pre">backup_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.backup_count" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.console_output">
+<span class="sig-name descname"><span class="pre">console_output</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.console_output" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.LoggingConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#liberzmq.core.config.LoggingConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">SerializationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'json'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_ensure_ascii</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protobuf_validate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#SerializationConfig"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.SerializationConfig" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>序列化配置</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></em><a class="headerlink" href="#liberzmq.core.config.SerializationConfig.default" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig.json_ensure_ascii">
+<span class="sig-name descname"><span class="pre">json_ensure_ascii</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></em><a class="headerlink" href="#liberzmq.core.config.SerializationConfig.json_ensure_ascii" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig.json_indent">
+<span class="sig-name descname"><span class="pre">json_indent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></em><a class="headerlink" href="#liberzmq.core.config.SerializationConfig.json_indent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig.protobuf_validate">
+<span class="sig-name descname"><span class="pre">protobuf_validate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></em><a class="headerlink" href="#liberzmq.core.config.SerializationConfig.protobuf_validate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.SerializationConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#liberzmq.core.config.SerializationConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">Config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zmq:</span> <span class="pre">~liberzmq.core.config.ZMQConfig</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging:</span> <span class="pre">~liberzmq.core.config.LoggingConfig</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serialization:</span> <span class="pre">~liberzmq.core.config.SerializationConfig</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_data:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_config:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**extra_data:</span> <span class="pre">~typing.Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>主配置类</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.zmq">
+<span class="sig-name descname"><span class="pre">zmq</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#liberzmq.core.config.ZMQConfig" title="liberzmq.core.config.ZMQConfig"><span class="pre">ZMQConfig</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.zmq" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.logging">
+<span class="sig-name descname"><span class="pre">logging</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#liberzmq.core.config.LoggingConfig" title="liberzmq.core.config.LoggingConfig"><span class="pre">LoggingConfig</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.logging" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.serialization">
+<span class="sig-name descname"><span class="pre">serialization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#liberzmq.core.config.SerializationConfig" title="liberzmq.core.config.SerializationConfig"><span class="pre">SerializationConfig</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.serialization" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.debug">
+<span class="sig-name descname"><span class="pre">debug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.debug" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.validate_data">
+<span class="sig-name descname"><span class="pre">validate_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.validate_data" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.dynamic_config">
+<span class="sig-name descname"><span class="pre">dynamic_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="（在 Python v3.13）"><span class="pre">dict</span></a></em><a class="headerlink" href="#liberzmq.core.config.Config.dynamic_config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.Config">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Config</span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.Config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.Config" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="（在 Python v3.13）"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.Config.extra">
+<span class="sig-name descname"><span class="pre">extra</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'allow'</span></em><a class="headerlink" href="#liberzmq.core.config.Config.Config.extra" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.from_file">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.from_file"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.from_file" title="Link to this definition">¶</a></dt>
+<dd><p>从配置文件加载配置</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> -- 配置文件路径，支持YAML和JSON格式</p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>配置实例</p>
+</dd>
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#liberzmq.core.config.Config.Config" title="liberzmq.core.config.Config.Config">Config</a></p>
+</dd>
+<dt class="field-even">抛出<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="（在 Python v3.13）"><strong>FileNotFoundError</strong></a> -- 配置文件不存在</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="（在 Python v3.13）"><strong>ValueError</strong></a> -- 配置文件格式错误</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.from_env">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'LIBERZMQ_'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.from_env"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.from_env" title="Link to this definition">¶</a></dt>
+<dd><p>从环境变量加载配置</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefix</strong> -- 环境变量前缀</p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>配置实例</p>
+</dd>
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#liberzmq.core.config.Config.Config" title="liberzmq.core.config.Config.Config">Config</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.to_file">
+<span class="sig-name descname"><span class="pre">to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.to_file"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.to_file" title="Link to this definition">¶</a></dt>
+<dd><p>将配置保存到文件</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> -- 配置文件路径</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.set"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.set" title="Link to this definition">¶</a></dt>
+<dd><p>设置配置值</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> -- 配置键，支持点号分隔的嵌套访问，如 'zmq.linger'</p></li>
+<li><p><strong>value</strong> -- 配置值</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">updates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="（在 Python v3.13）"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.update"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.update" title="Link to this definition">¶</a></dt>
+<dd><p>批量更新配置</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>updates</strong> -- 要更新的配置项字典</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.get"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.get" title="Link to this definition">¶</a></dt>
+<dd><p>使用点号分隔的键获取配置值</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> -- 配置键，支持点号分隔的嵌套访问，如 'zmq.linger'</p></li>
+<li><p><strong>default</strong> -- 默认值</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>配置值或默认值</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.load_from_dict">
+<span class="sig-name descname"><span class="pre">load_from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="（在 Python v3.13）"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.load_from_dict"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.load_from_dict" title="Link to this definition">¶</a></dt>
+<dd><p>从字典加载配置</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_dict</strong> -- 配置字典</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.load_from_file">
+<span class="sig-name descname"><span class="pre">load_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.load_from_file"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.load_from_file" title="Link to this definition">¶</a></dt>
+<dd><p>从配置文件加载配置到当前实例</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> -- 配置文件路径，支持YAML和JSON格式</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.load_from_env">
+<span class="sig-name descname"><span class="pre">load_from_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'LIBERZMQ_'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.load_from_env"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.load_from_env" title="Link to this definition">¶</a></dt>
+<dd><p>从环境变量加载配置到当前实例</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefix</strong> -- 环境变量前缀</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="（在 Python v3.13）"><span class="pre">dict</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#Config.to_dict"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.Config.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>将配置导出为字典</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>配置字典</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="（在 Python v3.13）">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liberzmq.core.config.Config.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></em><a class="headerlink" href="#liberzmq.core.config.Config.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liberzmq.core.config.get_config">
+<span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#get_config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.get_config" title="Link to this definition">¶</a></dt>
+<dd><p>获取全局配置实例</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liberzmq.core.config.set_config">
+<span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">set_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#set_config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.set_config" title="Link to this definition">¶</a></dt>
+<dd><p>设置全局配置实例</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liberzmq.core.config.load_config_from_file">
+<span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">load_config_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#load_config_from_file"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.load_config_from_file" title="Link to this definition">¶</a></dt>
+<dd><p>从文件加载全局配置</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liberzmq.core.config.load_config_from_env">
+<span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">load_config_from_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'LIBERZMQ_'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#load_config_from_env"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.load_config_from_env" title="Link to this definition">¶</a></dt>
+<dd><p>从环境变量加载全局配置</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liberzmq.core.config.load_config">
+<span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#liberzmq.core.config.ConfigWrapper" title="liberzmq.core.config.ConfigWrapper"><span class="pre">ConfigWrapper</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/config.html#load_config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.load_config" title="Link to this definition">¶</a></dt>
+<dd><p>通用配置加载函数</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source</strong> -- 配置源，可以是字典或文件路径</p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>配置包装器对象</p>
+</dd>
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#liberzmq.core.config.ConfigWrapper" title="liberzmq.core.config.ConfigWrapper">ConfigWrapper</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.config.ConfigWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.config.</span></span><span class="sig-name descname"><span class="pre">ConfigWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#ConfigWrapper"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.ConfigWrapper" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="（在 Python v3.13）"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>配置包装器，提供点号访问支持</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.ConfigWrapper.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liberzmq.core.config.Config" title="liberzmq.core.config.Config"><span class="pre">Config</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#ConfigWrapper.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.ConfigWrapper.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.ConfigWrapper.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#ConfigWrapper.get"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.ConfigWrapper.get" title="Link to this definition">¶</a></dt>
+<dd><p>使用点号分隔的键获取配置值</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> -- 配置键，支持点号分隔的嵌套访问，如 'zmq.linger'</p></li>
+<li><p><strong>default</strong> -- 默认值</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>配置值或默认值</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.config.ConfigWrapper.__getattr__">
+<span class="sig-name descname"><span class="pre">__getattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/config.html#ConfigWrapper.__getattr__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.config.ConfigWrapper.__getattr__" title="Link to this definition">¶</a></dt>
+<dd><p>代理属性访问到内部配置对象</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id2">
+<h2>异常处理<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-liberzmq.core.base">
+<span id="id3"></span><h2>基础类<a class="headerlink" href="#module-liberzmq.core.base" title="Link to this heading">¶</a></h2>
+<p>基础类模块</p>
+<p>定义所有消息模式的基类和通用接口。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BaseZMQNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="（在 Python v3.13）"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>ZeroMQ节点基类</p>
+<p>所有ZeroMQ消息模式的基类，提供通用的连接管理和配置功能。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.connect"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.connect" title="Link to this definition">¶</a></dt>
+<dd><p>建立连接</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.disconnect">
+<span class="sig-name descname"><span class="pre">disconnect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.disconnect"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.disconnect" title="Link to this definition">¶</a></dt>
+<dd><p>断开连接</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.is_connected">
+<span class="sig-name descname"><span class="pre">is_connected</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="（在 Python v3.13）"><span class="pre">bool</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.is_connected"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.is_connected" title="Link to this definition">¶</a></dt>
+<dd><p>检查是否已连接</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.__enter__">
+<span class="sig-name descname"><span class="pre">__enter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.__enter__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.__enter__" title="Link to this definition">¶</a></dt>
+<dd><p>上下文管理器入口</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.__exit__">
+<span class="sig-name descname"><span class="pre">__exit__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc_tb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.__exit__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.__exit__" title="Link to this definition">¶</a></dt>
+<dd><p>上下文管理器出口</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseZMQNode.__del__">
+<span class="sig-name descname"><span class="pre">__del__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseZMQNode.__del__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseZMQNode.__del__" title="Link to this definition">¶</a></dt>
+<dd><p>析构函数</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePublisher">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BasePublisher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePublisher"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePublisher" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>发布者基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePublisher.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePublisher.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePublisher.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePublisher.publish">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">publish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePublisher.publish"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePublisher.publish" title="Link to this definition">¶</a></dt>
+<dd><p>发布消息</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topic</strong> -- 主题</p></li>
+<li><p><strong>data</strong> -- 数据</p></li>
+<li><p><strong>**kwargs</strong> -- 其他参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseSubscriber">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BaseSubscriber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseSubscriber"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseSubscriber" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>订阅者基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseSubscriber.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseSubscriber.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseSubscriber.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseSubscriber.subscribe">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subscribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseSubscriber.subscribe"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseSubscriber.subscribe" title="Link to this definition">¶</a></dt>
+<dd><p>订阅主题</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>topic</strong> -- 主题</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseSubscriber.unsubscribe">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unsubscribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="（在 Python v3.13）"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseSubscriber.unsubscribe"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseSubscriber.unsubscribe" title="Link to this definition">¶</a></dt>
+<dd><p>取消订阅主题</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>topic</strong> -- 主题</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseSubscriber.receive">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">receive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseSubscriber.receive"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseSubscriber.receive" title="Link to this definition">¶</a></dt>
+<dd><p>接收消息</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>timeout</strong> -- 超时时间（毫秒）</p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>接收到的消息</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseServer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BaseServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseServer"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseServer" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>服务器基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseServer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseServer.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseServer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseServer.start">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseServer.start"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseServer.start" title="Link to this definition">¶</a></dt>
+<dd><p>启动服务器</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseServer.stop">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseServer.stop"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseServer.stop" title="Link to this definition">¶</a></dt>
+<dd><p>停止服务器</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseServer.handler">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseServer.handler"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseServer.handler" title="Link to this definition">¶</a></dt>
+<dd><p>注册请求处理函数</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> -- 处理函数</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseClient">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BaseClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseClient"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseClient" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>客户端基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseClient.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseClient.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BaseClient.request">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BaseClient.request"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BaseClient.request" title="Link to this definition">¶</a></dt>
+<dd><p>发送请求</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> -- 请求数据</p></li>
+<li><p><strong>timeout</strong> -- 超时时间（毫秒）</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>响应数据</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePusher">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BasePusher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePusher"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePusher" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>推送者基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePusher.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePusher.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePusher.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePusher.push">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">push</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePusher.push"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePusher.push" title="Link to this definition">¶</a></dt>
+<dd><p>推送数据</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> -- 数据</p></li>
+<li><p><strong>**kwargs</strong> -- 其他参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePuller">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liberzmq.core.base.</span></span><span class="sig-name descname"><span class="pre">BasePuller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePuller"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePuller" title="Link to this definition">¶</a></dt>
+<dd><p>基类：<a class="reference internal" href="#liberzmq.core.base.BaseZMQNode" title="liberzmq.core.base.BaseZMQNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseZMQNode</span></code></a></p>
+<p>拉取者基类</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePuller.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePuller.__init__"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePuller.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>初始化ZeroMQ节点</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> -- 主机地址</p></li>
+<li><p><strong>port</strong> -- 端口号</p></li>
+<li><p><strong>socket_type</strong> -- ZeroMQ socket类型</p></li>
+<li><p><strong>bind</strong> -- 是否绑定端口（True为服务端，False为客户端）</p></li>
+<li><p><strong>**kwargs</strong> -- 其他配置参数</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liberzmq.core.base.BasePuller.pull">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pull</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="（在 Python v3.13）"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="（在 Python v3.13）"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="（在 Python v3.13）"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/liberzmq/core/base.html#BasePuller.pull"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#liberzmq.core.base.BasePuller.pull" title="Link to this definition">¶</a></dt>
+<dd><p>拉取数据</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>timeout</strong> -- 超时时间（毫秒）</p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>拉取到的数据</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+      |
+      <a href="../_sources/api/core.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/liberalchang/liberzmq" class="github">
+        <img src="../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

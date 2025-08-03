@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>LiberZMQ 文档 &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=9a98c4c4" />
+    <script src="_static/documentation_options.js?v=34088549"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="安装指南" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liberalchang&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">性能指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">高级用法</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">核心模块 (liberzmq.core)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="下一章">安装指南</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="liberzmq">
+<h1>LiberZMQ 文档<a class="headerlink" href="#liberzmq" title="Link to this heading">¶</a></h1>
+<p>LiberZMQ是一个基于ZeroMQ的高级Python消息传递库，提供简单易用的API来实现各种消息模式。</p>
+<section id="id1">
+<h2>特性<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>多种消息模式</strong>: 支持发布-订阅、请求-响应、推拉、Dealer/Router等四种核心模式</p></li>
+<li><p><strong>灵活的序列化</strong>: 支持JSON、Protocol Buffers、二进制、MessagePack等序列化格式</p></li>
+<li><p><strong>配置管理</strong>: 支持文件和环境变量配置</p></li>
+<li><p><strong>日志系统</strong>: 内置可配置的日志功能</p></li>
+<li><p><strong>异常处理</strong>: 完善的异常处理机制和重试机制</p></li>
+<li><p><strong>数据校验</strong>: 支持Cerberus、Pydantic等数据校验工具</p></li>
+<li><p><strong>高性能</strong>: 基于ZeroMQ的高性能异步消息传递</p></li>
+<li><p><strong>易于使用</strong>: 简洁的API设计，降低学习成本</p></li>
+<li><p><strong>可扩展性</strong>: 支持自定义序列化器和扩展接口</p></li>
+<li><p><strong>监控支持</strong>: 内置性能指标和监控机制</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>快速开始<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h3>安装<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pyzmq
+<span class="c1"># 可选：安装protobuf支持</span>
+pip<span class="w"> </span>install<span class="w"> </span>protobuf
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>基本使用<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<p>发布-订阅模式:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Publisher</span><span class="p">,</span> <span class="n">Subscriber</span>
+
+<span class="c1"># 发布者</span>
+<span class="n">publisher</span> <span class="o">=</span> <span class="n">Publisher</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5555&quot;</span><span class="p">)</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s2">&quot;news&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;重要新闻&quot;</span><span class="p">})</span>
+
+<span class="c1"># 订阅者</span>
+<span class="n">subscriber</span> <span class="o">=</span> <span class="n">Subscriber</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://localhost:5555&quot;</span><span class="p">)</span>
+<span class="n">subscriber</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">subscriber</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;news&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">topic</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+<span class="n">subscriber</span><span class="o">.</span><span class="n">start_listening</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Dealer/Router模式:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dealer</span><span class="p">,</span> <span class="n">Router</span>
+
+<span class="c1"># Router服务器</span>
+<span class="n">router</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5558&quot;</span><span class="p">)</span>
+<span class="n">router</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+<span class="c1"># Dealer客户端</span>
+<span class="n">dealer</span> <span class="o">=</span> <span class="n">Dealer</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://localhost:5558&quot;</span><span class="p">)</span>
+<span class="n">dealer</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+<span class="c1"># 发送请求并接收响应</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">dealer</span><span class="o">.</span><span class="n">send_request</span><span class="p">({</span><span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;响应: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h2>目录<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id2">系统要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id3">基础安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id4">可选依赖</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id6">从源码安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id7">验证安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id8">故障排除</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id2">基本概念</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id3">发布-订阅模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id6">请求-响应模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id9">推拉模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#dealer-router">Dealer/Router模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id12">配置和序列化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#id16">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">架构设计</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id2">设计理念</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id3">核心架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id4">模块设计</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id5">设计模式应用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id6">性能优化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id7">扩展性设计</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id8">安全考虑</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">性能指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id2">性能基准</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id3">序列化器性能对比</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id5">消息模式性能特点</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id9">配置优化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id11">内存优化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id14">监控和调试</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id17">最佳实践总结</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#id18">故障排查</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">高级用法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id2">自定义序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id4">数据校验集成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id5">中间件系统</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id7">连接池管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id9">负载均衡和故障转移</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id11">消息重试和死信队列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id13">分布式锁</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#id14">总结</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">核心模块 (liberzmq.core)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#module-liberzmq.core.config">配置管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#id2">异常处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#module-liberzmq.core.base">基础类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/patterns.html">消息模式 (liberzmq.patterns)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/patterns.html#id1">发布-订阅模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/patterns.html#id2">请求-响应模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/patterns.html#module-liberzmq.patterns.pushpull">推拉模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/patterns.html#module-liberzmq.patterns.dealerrouter">Dealer/Router模式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/patterns.html#module-liberzmq.patterns">模式工厂</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/serializers.html">序列化器 (liberzmq.serializers)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#module-liberzmq.serializers.base">基础序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#module-liberzmq.serializers.json_serializer">JSON序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#module-liberzmq.serializers.binary_serializer">二进制序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#protocol-buffers">Protocol Buffers序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#module-liberzmq.serializers.factory">序列化器工厂</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/serializers.html#module-liberzmq.serializers">序列化器模块</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/logging.html">日志模块 (liberzmq.logging)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/logging.html#module-liberzmq.logging.logger">日志器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/logging.html#module-liberzmq.logging">日志模块</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">异常处理 (liberzmq.exceptions)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/exceptions.html#module-liberzmq.exceptions.base">异常基类</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/exceptions.html#module-liberzmq.exceptions">异常模块</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="id6">
+<h1>索引和表格<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">索引</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">模块索引</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">搜索页面</span></a></p></li>
+</ul>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/liberalchang/liberzmq" class="github">
+        <img src="_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

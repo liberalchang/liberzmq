@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>liberzmq.serializers.binary_serializer &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=9a98c4c4" />
+    <script src="../../../_static/documentation_options.js?v=34088549"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liber&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">性能指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">高级用法</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">核心模块 (liberzmq.core)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">模块代码</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>liberzmq.serializers.binary_serializer 源代码</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">二进制序列化器模块</span>
+
+<span class="sd">实现基于pickle的二进制数据序列化和反序列化。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..exceptions.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerializationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..logging.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BinarySerializer">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BinarySerializer</span><span class="p">(</span><span class="n">BaseSerializer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;二进制序列化器</span>
+<span class="sd">    </span>
+<span class="sd">    使用pickle进行二进制数据序列化和反序列化。</span>
+<span class="sd">    支持几乎所有Python对象类型。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="BinarySerializer.__init__">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.__init__">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">protocol</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">,</span>
+                 <span class="n">fix_imports</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                 <span class="n">buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">use_compression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">compression_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        初始化二进制序列化器</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            protocol: pickle协议版本</span>
+<span class="sd">            fix_imports: 是否修复导入问题</span>
+<span class="sd">            buffer_callback: 缓冲区回调函数</span>
+<span class="sd">            use_compression: 是否使用压缩</span>
+<span class="sd">            compression_level: 压缩级别 (1-9)</span>
+<span class="sd">            **kwargs: 其他配置参数</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span> <span class="o">=</span> <span class="n">fix_imports</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_callback</span> <span class="o">=</span> <span class="n">buffer_callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="o">=</span> <span class="n">use_compression</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span> <span class="o">=</span> <span class="n">compression_level</span>
+        
+        <span class="c1"># 如果使用压缩，导入压缩模块</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">zlib</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="n">zlib</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;启用zlib压缩，压缩级别: </span><span class="si">{</span><span class="n">compression_level</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;zlib模块不可用，禁用压缩&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制序列化器初始化完成，协议版本: </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2">，压缩: </span><span class="si">{</span><span class="n">use_compression</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;序列化格式名称&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;binary&quot;</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;内容类型&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;application/octet-stream&quot;</span>
+    
+<div class="viewcode-block" id="BinarySerializer.serialize">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.serialize">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;序列化数据为二进制格式</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要序列化的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bytes: 二进制格式的字节数据</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            SerializationError: 序列化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 使用pickle序列化</span>
+            <span class="n">pickle_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span>
+                <span class="s2">&quot;fix_imports&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span>
+            <span class="p">}</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">pickle_kwargs</span><span class="p">[</span><span class="s2">&quot;buffer_callback&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_callback</span>
+            
+            <span class="n">pickled_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">pickle_kwargs</span><span class="p">)</span>
+            
+            <span class="c1"># 如果启用压缩，压缩数据</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">:</span>
+                <span class="n">compressed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span><span class="p">)</span>
+                
+                <span class="c1"># 添加压缩标志和原始大小信息</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;!BI&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">))</span>  <span class="c1"># 1表示压缩，原始大小</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">compressed_data</span>
+                
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制序列化成功（压缩），原始大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节，压缩后: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">compressed_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># 添加未压缩标志</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;!BI&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">))</span>  <span class="c1"># 0表示未压缩</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">pickled_data</span>
+                
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制序列化成功（未压缩），数据大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">result</span>
+            
+        <span class="k">except</span> <span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">PickleError</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;二进制序列化失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;binary&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;二进制序列化时发生未知错误: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;binary&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.deserialize">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.deserialize">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;从二进制格式反序列化数据</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 二进制格式的字节数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Any: 反序列化后的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            SerializationError: 反序列化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 检查数据长度</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># 至少需要5字节的头部</span>
+                <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;二进制数据太短，无法解析头部&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># 解析头部</span>
+            <span class="n">is_compressed</span><span class="p">,</span> <span class="n">original_size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;!BI&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span>
+            
+            <span class="c1"># 如果数据被压缩，先解压缩</span>
+            <span class="k">if</span> <span class="n">is_compressed</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;数据被压缩但序列化器未启用压缩支持&quot;</span><span class="p">)</span>
+                
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pickled_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+                    
+                    <span class="c1"># 验证解压缩后的大小</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span> <span class="o">!=</span> <span class="n">original_size</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;解压缩后大小不匹配，期望: </span><span class="si">{</span><span class="n">original_size</span><span class="si">}</span><span class="s2">，实际: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制数据解压缩成功，压缩大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节，原始大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+                    
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据解压缩失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pickled_data</span> <span class="o">=</span> <span class="n">payload</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制数据未压缩，大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># 使用pickle反序列化</span>
+            <span class="n">pickle_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;fix_imports&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span>
+            <span class="p">}</span>
+            
+            <span class="n">result</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">,</span> <span class="o">**</span><span class="n">pickle_kwargs</span><span class="p">)</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制反序列化成功，数据类型: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+            
+        <span class="k">except</span> <span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">PickleError</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;二进制反序列化失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;binary&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SerializationError</span><span class="p">:</span>
+            <span class="c1"># 重新抛出SerializationError</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;二进制反序列化时发生未知错误: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;binary&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.validate_data">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.validate_data">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证数据是否可以被pickle序列化</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要验证的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: 数据是否有效</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span> <span class="n">fix_imports</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">PickleError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制数据验证失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;二进制数据验证时发生未知错误: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.get_metadata">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.get_metadata">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取序列化器元数据&quot;&quot;&quot;</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
+        <span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span>
+            <span class="s2">&quot;fix_imports&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span><span class="p">,</span>
+            <span class="s2">&quot;use_compression&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span><span class="p">,</span>
+            <span class="s2">&quot;compression_level&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;compressor&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="n">metadata</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.set_compression">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.set_compression">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_compression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;设置压缩选项</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            enabled: 是否启用压缩</span>
+<span class="sd">            level: 压缩级别 (1-9)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">enabled</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">zlib</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="n">zlib</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">level</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;启用压缩，级别: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;无法启用压缩，zlib模块不可用&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;禁用压缩&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.get_compression_ratio">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.get_compression_ratio">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_compression_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取数据的压缩比</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要测试的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[float]: 压缩比（压缩后大小/原始大小），如果不支持压缩则返回None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pickled_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span> <span class="n">fix_imports</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span><span class="p">)</span>
+            <span class="n">compressed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span><span class="p">)</span>
+            
+            <span class="n">ratio</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">compressed_data</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;压缩比: </span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> (原始: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节，压缩: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">compressed_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节)&quot;</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">ratio</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;计算压缩比失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+    
+<div class="viewcode-block" id="BinarySerializer.estimate_size">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.binary_serializer.BinarySerializer.estimate_size">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;估算序列化后的数据大小</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要估算的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int: 估算的字节大小</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pickled_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span> <span class="n">fix_imports</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fix_imports</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_compression</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">:</span>
+                <span class="n">compressed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_level</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">compressed_data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span>  <span class="c1"># 加上头部大小</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span>  <span class="c1"># 加上头部大小</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;估算数据大小失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+    </div>
+
+    
+    <a href="https://github.com/liber/liberzmq" class="github">
+        <img src="../../../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

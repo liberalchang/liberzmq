@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>liberzmq.serializers.protobuf_serializer &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=9a98c4c4" />
+    <script src="../../../_static/documentation_options.js?v=34088549"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liber&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">性能指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">高级用法</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">核心模块 (liberzmq.core)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">模块代码</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>liberzmq.serializers.protobuf_serializer 源代码</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Protobuf序列化器模块</span>
+
+<span class="sd">实现基于Protocol Buffers的数据序列化和反序列化。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..exceptions.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerializationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..logging.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">google.protobuf.message</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pb_message</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">google.protobuf.json_format</span><span class="w"> </span><span class="kn">import</span> <span class="n">MessageToDict</span><span class="p">,</span> <span class="n">ParseDict</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">google.protobuf.message</span><span class="w"> </span><span class="kn">import</span> <span class="n">DecodeError</span>
+    <span class="n">PROTOBUF_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">PROTOBUF_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">pb_message</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">MessageToDict</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ParseDict</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">DecodeError</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProtobufSerializer">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProtobufSerializer</span><span class="p">(</span><span class="n">BaseSerializer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protobuf序列化器</span>
+<span class="sd">    </span>
+<span class="sd">    使用Protocol Buffers进行数据序列化和反序列化。</span>
+<span class="sd">    支持protobuf消息对象和字典数据的相互转换。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ProtobufSerializer.__init__">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.__init__">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">message_class</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">validate_message</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                 <span class="n">use_json_fallback</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                 <span class="n">preserve_proto_field_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">including_default_value_fields</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        初始化Protobuf序列化器</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            message_class: Protobuf消息类</span>
+<span class="sd">            validate_message: 是否验证消息</span>
+<span class="sd">            use_json_fallback: 当数据不是protobuf消息时是否使用JSON回退</span>
+<span class="sd">            preserve_proto_field_name: 是否保留proto字段名</span>
+<span class="sd">            including_default_value_fields: 是否包含默认值字段</span>
+<span class="sd">            **kwargs: 其他配置参数</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">PROTOBUF_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;protobuf库未安装，请运行: pip install protobuf&quot;</span><span class="p">)</span>
+        
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span> <span class="o">=</span> <span class="n">message_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_message</span> <span class="o">=</span> <span class="n">validate_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span> <span class="o">=</span> <span class="n">use_json_fallback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preserve_proto_field_name</span> <span class="o">=</span> <span class="n">preserve_proto_field_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">including_default_value_fields</span> <span class="o">=</span> <span class="n">including_default_value_fields</span>
+        
+        <span class="c1"># JSON序列化选项</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">json_options</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;preserve_proto_field_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">preserve_proto_field_name</span><span class="p">,</span>
+            <span class="s2">&quot;including_default_value_fields&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">including_default_value_fields</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># 如果启用JSON回退，导入JSON序列化器</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.json_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONSerializer</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span> <span class="o">=</span> <span class="n">JSONSerializer</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf序列化器初始化完成，消息类: </span><span class="si">{</span><span class="n">message_class</span><span class="si">}</span><span class="s2">, JSON回退: </span><span class="si">{</span><span class="n">use_json_fallback</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;序列化格式名称&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;protobuf&quot;</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;内容类型&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;application/x-protobuf&quot;</span>
+    
+<div class="viewcode-block" id="ProtobufSerializer.serialize">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.serialize">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;序列化数据为Protobuf格式</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要序列化的数据（protobuf消息对象或字典）</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bytes: Protobuf格式的字节数据</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            SerializationError: 序列化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 如果数据已经是protobuf消息对象</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pb_message</span><span class="o">.</span><span class="n">Message</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_message</span><span class="p">:</span>
+                    <span class="c1"># 验证消息</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">data</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>  <span class="c1"># 测试序列化</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf消息验证失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+                <span class="n">result</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf序列化成功（消息对象），数据大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">result</span>
+            
+            <span class="c1"># 如果有指定的消息类，尝试从字典创建消息</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">()</span>
+                    <span class="n">ParseDict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">json_options</span><span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_message</span><span class="p">:</span>
+                        <span class="n">message</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>  <span class="c1"># 测试序列化</span>
+                    
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf序列化成功（字典转消息），数据大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2"> 字节&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">result</span>
+                    
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf序列化失败，使用JSON回退: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serialize_with_json_fallback</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;从字典创建Protobuf消息失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># 如果启用JSON回退，使用JSON序列化</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;数据不是Protobuf消息，使用JSON回退序列化&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serialize_with_json_fallback</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;不支持的数据类型: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">，期望protobuf消息对象或字典&quot;</span><span class="p">)</span>
+                
+        <span class="k">except</span> <span class="n">SerializationError</span><span class="p">:</span>
+            <span class="c1"># 重新抛出SerializationError</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Protobuf序列化时发生未知错误: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;protobuf&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.deserialize">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.deserialize">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;从Protobuf格式反序列化数据</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: Protobuf格式的字节数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Any: 反序列化后的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            SerializationError: 反序列化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 如果有指定的消息类，尝试反序列化为消息对象</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">()</span>
+                    <span class="n">message</span><span class="o">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf反序列化成功（消息对象），类型: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">message</span>
+                    
+                <span class="k">except</span> <span class="n">DecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf反序列化失败，尝试JSON回退: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deserialize_with_json_fallback</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf反序列化失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># 如果没有指定消息类但启用JSON回退</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;未指定消息类，尝试JSON回退反序列化&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deserialize_with_json_fallback</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;未指定消息类且未启用JSON回退，无法反序列化&quot;</span><span class="p">)</span>
+                
+        <span class="k">except</span> <span class="n">SerializationError</span><span class="p">:</span>
+            <span class="c1"># 重新抛出SerializationError</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Protobuf反序列化时发生未知错误: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s2">&quot;protobuf&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_with_json_fallback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;使用JSON回退序列化&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;JSON回退序列化器未初始化&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># 添加标记表示这是JSON回退数据</span>
+        <span class="n">json_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="c1"># 在前面添加一个字节标记（0xFF表示JSON回退）</span>
+        <span class="k">return</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\xff</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">json_data</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_deserialize_with_json_fallback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;使用JSON回退反序列化&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;JSON回退序列化器未初始化&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># 检查是否有JSON回退标记</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\xff</span><span class="s1">&#39;</span><span class="p">):</span>
+            <span class="n">json_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># 移除标记字节</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># 直接尝试JSON反序列化</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_serializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="ProtobufSerializer.validate_data">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.validate_data">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证数据是否可以被Protobuf序列化</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 要验证的数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: 数据是否有效</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf数据验证失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.message_to_dict">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.message_to_dict">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">message_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">pb_message</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;将Protobuf消息转换为字典</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            message: Protobuf消息对象</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: 字典表示</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">pb_message</span><span class="o">.</span><span class="n">Message</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;输入必须是Protobuf消息对象&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MessageToDict</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">json_options</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protobuf消息转字典失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;消息转字典失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.dict_to_message">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.dict_to_message">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dict_to_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pb_message</span><span class="o">.</span><span class="n">Message</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;将字典转换为Protobuf消息</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: 字典数据</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            pb_message.Message: Protobuf消息对象</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;未指定消息类&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;输入必须是字典&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">()</span>
+            <span class="n">ParseDict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">json_options</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">message</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;字典转Protobuf消息失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;字典转消息失败: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.set_message_class">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.set_message_class">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_message_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;设置消息类</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            message_class: Protobuf消息类</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">message_class</span><span class="p">,</span> <span class="n">pb_message</span><span class="o">.</span><span class="n">Message</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;消息类必须继承自protobuf Message&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span> <span class="o">=</span> <span class="n">message_class</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;设置消息类: </span><span class="si">{</span><span class="n">message_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.get_metadata">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.get_metadata">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取序列化器元数据&quot;&quot;&quot;</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
+        <span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s2">&quot;message_class&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;validate_message&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_message</span><span class="p">,</span>
+            <span class="s2">&quot;use_json_fallback&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_json_fallback</span><span class="p">,</span>
+            <span class="s2">&quot;preserve_proto_field_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">preserve_proto_field_name</span><span class="p">,</span>
+            <span class="s2">&quot;including_default_value_fields&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">including_default_value_fields</span><span class="p">,</span>
+            <span class="s2">&quot;protobuf_available&quot;</span><span class="p">:</span> <span class="n">PROTOBUF_AVAILABLE</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="n">metadata</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.set_json_options">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.set_json_options">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_json_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;设置JSON转换选项</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: JSON转换选项</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valid_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;preserve_proto_field_name&quot;</span><span class="p">,</span> <span class="s2">&quot;including_default_value_fields&quot;</span><span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">valid_options</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">json_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;更新JSON选项: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;未知的JSON选项: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ProtobufSerializer.get_message_info">
+<a class="viewcode-back" href="../../../api/serializers.html#liberzmq.serializers.protobuf_serializer.ProtobufSerializer.get_message_info">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_message_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取消息类信息</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[Dict[str, Any]]: 消息类信息，如果未设置消息类则返回None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_class</span><span class="p">()</span>
+            <span class="n">descriptor</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
+            
+            <span class="n">fields_info</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">descriptor</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                <span class="n">field_info</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">&quot;number&quot;</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="n">field</span><span class="o">.</span><span class="n">LABEL_REQUIRED</span>
+                <span class="p">}</span>
+                <span class="n">fields_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_info</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">descriptor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;full_name&quot;</span><span class="p">:</span> <span class="n">descriptor</span><span class="o">.</span><span class="n">full_name</span><span class="p">,</span>
+                <span class="s2">&quot;fields_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">descriptor</span><span class="o">.</span><span class="n">fields</span><span class="p">),</span>
+                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields_info</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;获取消息信息失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+    </div>
+
+    
+    <a href="https://github.com/liber/liberzmq" class="github">
+        <img src="../../../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

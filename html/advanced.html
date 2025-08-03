@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>高级用法 &#8212; LiberZMQ 1.0.0 文档</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=9a98c4c4" />
+    <script src="_static/documentation_options.js?v=34088549"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/translations.js?v=beaddf03"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="核心模块 (liberzmq.core)" href="api/core.html" />
+    <link rel="prev" title="性能指南" href="performance.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">LiberZMQ</a></h1>
+
+
+
+<p class="blurb">LiberZMQ - 高性能ZeroMQ消息传递库</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=liberalchang&repo=liberzmq&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>导航</h3>
+<p class="caption" role="heading"><span class="caption-text">用户指南:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">架构设计</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">性能指南</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">高级用法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">自定义序列化器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">数据校验集成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">中间件系统</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">连接池管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">负载均衡和故障转移</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">消息重试和死信队列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">分布式锁</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">总结</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API参考:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">核心模块 (liberzmq.core)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/patterns.html">消息模式 (liberzmq.patterns)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/serializers.html">序列化器 (liberzmq.serializers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/logging.html">日志模块 (liberzmq.logging)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">异常处理 (liberzmq.exceptions)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="performance.html" title="上一章">性能指南</a></li>
+      <li>Next: <a href="api/core.html" title="下一章">核心模块 (liberzmq.core)</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>高级用法<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>本指南介绍LiberZMQ的高级功能和复杂使用场景，帮助您构建更强大和灵活的消息传递系统。</p>
+<section id="id2">
+<h2>自定义序列化器<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h3>创建自定义序列化器<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.serializers.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSerializer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CompressedPickleSerializer</span><span class="p">(</span><span class="n">BaseSerializer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;压缩的Pickle序列化器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;序列化数据并压缩&quot;&quot;&quot;</span>
+        <span class="n">pickled_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">compressed_data</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">pickled_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">compressed_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;解压缩并反序列化数据&quot;&quot;&quot;</span>
+        <span class="n">decompressed_data</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">decompressed_data</span><span class="p">)</span>
+
+<span class="c1"># 注册自定义序列化器</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.serializers.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerializerFactory</span>
+<span class="n">SerializerFactory</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;compressed_pickle&#39;</span><span class="p">,</span> <span class="n">CompressedPickleSerializer</span><span class="p">)</span>
+
+<span class="c1"># 使用自定义序列化器</span>
+<span class="n">publisher</span> <span class="o">=</span> <span class="n">Publisher</span><span class="p">(</span>
+    <span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5555&quot;</span><span class="p">,</span>
+    <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;compressed_pickle&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h2>数据校验集成<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<section id="pydantic">
+<h3>使用Pydantic进行数据校验<a class="headerlink" href="#pydantic" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Publisher</span><span class="p">,</span> <span class="n">Subscriber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">LiberZMQValidationError</span>
+
+<span class="c1"># 定义数据模型</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserMessage</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+        <span class="n">min_anystr_length</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">validate_assignment</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidatedPublisher</span><span class="p">(</span><span class="n">Publisher</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;带数据校验的发布者&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_models</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_message_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_class</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册主题的数据模型&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_models</span><span class="p">[</span><span class="n">topic</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_class</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;发布消息前进行数据校验&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">topic</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_models</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># 验证数据</span>
+                <span class="n">model_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_models</span><span class="p">[</span><span class="n">topic</span><span class="p">]</span>
+                <span class="n">validated_message</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="o">**</span><span class="n">message</span><span class="p">)</span>
+                <span class="c1"># 发布验证后的数据</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">validated_message</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+            <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">LiberZMQValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据校验失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+
+<span class="c1"># 使用带校验的发布者</span>
+<span class="n">publisher</span> <span class="o">=</span> <span class="n">ValidatedPublisher</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5555&quot;</span><span class="p">)</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">register_message_model</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">UserMessage</span><span class="p">)</span>
+
+<span class="c1"># 发布有效数据</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;john_doe&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="s1">&#39;john@example.com&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">25</span>
+<span class="p">})</span>
+
+<span class="c1"># 发布无效数据会抛出异常</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="s1">&#39;invalid&#39;</span><span class="p">,</span>  <span class="c1"># 应该是整数</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>        <span class="c1"># 不能为空</span>
+        <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="s1">&#39;invalid&#39;</span><span class="p">,</span>    <span class="c1"># 无效邮箱</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>             <span class="c1"># 年龄不能为负</span>
+    <span class="p">})</span>
+<span class="k">except</span> <span class="n">LiberZMQValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据校验失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cerberus">
+<h3>使用Cerberus进行数据校验<a class="headerlink" href="#cerberus" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cerberus</span><span class="w"> </span><span class="kn">import</span> <span class="n">Validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Server</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidatedServer</span><span class="p">(</span><span class="n">Server</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;带数据校验的服务器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validators</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_validator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册动作的数据校验模式&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validators</span><span class="p">[</span><span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="n">Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册带校验的处理器&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">schema</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_validator</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">schema</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">validated_handler</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">action</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">validators</span><span class="p">:</span>
+                <span class="n">validator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validators</span><span class="p">[</span><span class="n">action</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;数据校验失败: </span><span class="si">{</span><span class="n">validator</span><span class="o">.</span><span class="n">errors</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">}</span>
+            <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">validated_handler</span><span class="p">)</span>
+
+<span class="c1"># 使用带校验的服务器</span>
+<span class="n">server</span> <span class="o">=</span> <span class="n">ValidatedServer</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5556&quot;</span><span class="p">)</span>
+<span class="n">server</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+<span class="c1"># 定义校验模式</span>
+<span class="n">calculate_schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;number&#39;</span><span class="p">,</span> <span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;number&#39;</span><span class="p">,</span> <span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="s1">&#39;operation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;allowed&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;subtract&#39;</span><span class="p">,</span> <span class="s1">&#39;multiply&#39;</span><span class="p">,</span> <span class="s1">&#39;divide&#39;</span><span class="p">]}</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_handler</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+    <span class="n">operation</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;operation&#39;</span><span class="p">,</span> <span class="s1">&#39;add&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;subtract&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;multiply&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;divide&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="s1">&#39;除数不能为零&#39;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span><span class="p">}</span>
+
+<span class="n">server</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="s1">&#39;calculate&#39;</span><span class="p">,</span> <span class="n">calculate_handler</span><span class="p">,</span> <span class="n">calculate_schema</span><span class="p">)</span>
+<span class="n">server</span><span class="o">.</span><span class="n">start_server</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h2>中间件系统<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<section id="id6">
+<h3>消息中间件<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Publisher</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MiddlewarePublisher</span><span class="p">(</span><span class="n">Publisher</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;支持中间件的发布者&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">middlewares</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_middleware</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">middleware</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;添加中间件&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">middlewares</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">middleware</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;通过中间件处理后发布消息&quot;&quot;&quot;</span>
+        <span class="c1"># 应用中间件</span>
+        <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">middlewares</span><span class="p">:</span>
+            <span class="n">topic</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">middleware</span><span class="o">.</span><span class="n">process_outgoing</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TimestampMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;添加时间戳的中间件&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_outgoing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">message</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LoggingMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;日志记录中间件&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_outgoing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;发送消息到主题 </span><span class="si">{</span><span class="n">topic</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">,</span><span class="w"> </span><span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CompressionMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;消息压缩中间件&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_outgoing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="c1"># 对大消息进行压缩标记</span>
+            <span class="n">message</span><span class="p">[</span><span class="s1">&#39;_compressed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">topic</span><span class="p">,</span> <span class="n">message</span>
+
+<span class="c1"># 使用中间件</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">publisher</span> <span class="o">=</span> <span class="n">MiddlewarePublisher</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5555&quot;</span><span class="p">)</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+<span class="c1"># 添加中间件</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">TimestampMiddleware</span><span class="p">())</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">LoggingMiddleware</span><span class="p">(</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)))</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">CompressionMiddleware</span><span class="p">())</span>
+
+<span class="c1"># 发布消息</span>
+<span class="n">publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;news&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;重要新闻&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="s1">&#39;这是一条重要新闻内容&#39;</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id7">
+<h2>连接池管理<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
+<section id="id8">
+<h3>高级连接池<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">queue</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConnectionPool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;线程安全的连接池&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_size</span> <span class="o">=</span> <span class="n">min_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_size</span> <span class="o">=</span> <span class="n">max_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">max_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_created_connections</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+        <span class="c1"># 预创建最小连接数</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_size</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_create_connection</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;创建新连接&quot;&quot;&quot;</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_created_connections</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">client</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取连接&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 尝试从池中获取连接</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">client</span>
+        <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+            <span class="c1"># 池中没有可用连接，创建新连接</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_created_connections</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_size</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_connection</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># 达到最大连接数，等待</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;归还连接&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Full</span><span class="p">:</span>
+            <span class="c1"># 池已满，关闭连接</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_created_connections</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;上下文管理器&quot;&quot;&quot;</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">client</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;关闭所有连接&quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_created_connections</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># 使用连接池</span>
+<span class="n">pool</span> <span class="o">=</span> <span class="n">ConnectionPool</span><span class="p">(</span><span class="s2">&quot;tcp://localhost:5556&quot;</span><span class="p">)</span>
+
+<span class="c1"># 方式1：手动管理</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;process&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="s1">&#39;test&#39;</span><span class="p">})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">pool</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+
+<span class="c1"># 方式2：使用上下文管理器</span>
+<span class="k">with</span> <span class="n">pool</span><span class="o">.</span><span class="n">connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;process&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="s1">&#39;test&#39;</span><span class="p">})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+<span class="c1"># 清理</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">close_all</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id9">
+<h2>负载均衡和故障转移<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h2>
+<section id="id10">
+<h3>客户端负载均衡<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="ne">ConnectionError</span><span class="p">,</span> <span class="ne">TimeoutError</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LoadBalancedClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;负载均衡客户端&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addresses</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;round_robin&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clients</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># 初始化客户端</span>
+        <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">)</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span>
+            <span class="k">except</span> <span class="ne">ConnectionError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_next_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;根据策略获取下一个地址&quot;&quot;&quot;</span>
+        <span class="n">available_addresses</span> <span class="o">=</span> <span class="p">[</span><span class="n">addr</span> <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span>
+                             <span class="k">if</span> <span class="n">addr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">available_addresses</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;没有可用的服务器&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;round_robin&#39;</span><span class="p">:</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="n">available_addresses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">available_addresses</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">address</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">available_addresses</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">available_addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">retry_count</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;发送请求，支持重试和故障转移&quot;&quot;&quot;</span>
+        <span class="n">last_exception</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">retry_count</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_address</span><span class="p">()</span>
+                <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">address</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ConnectionError</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">last_exception</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="c1"># 标记地址为失败</span>
+                <span class="k">if</span> <span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+
+                <span class="c1"># 等待后重试</span>
+                <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">retry_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>  <span class="c1"># 指数退避</span>
+
+        <span class="k">raise</span> <span class="n">last_exception</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;健康检查，恢复可用的服务器&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
+                    <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">)</span>
+                    <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span>
+
+                <span class="c1"># 发送健康检查请求</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">address</span><span class="p">]</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;ping&#39;</span><span class="p">,</span> <span class="p">{},</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">failed_addresses</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ConnectionError</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">disconnect_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;断开所有连接&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+
+<span class="c1"># 使用负载均衡客户端</span>
+<span class="n">addresses</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;tcp://server1:5556&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tcp://server2:5556&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tcp://server3:5556&quot;</span>
+<span class="p">]</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">LoadBalancedClient</span><span class="p">(</span><span class="n">addresses</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;round_robin&#39;</span><span class="p">)</span>
+
+<span class="c1"># 发送请求</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;process&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="s1">&#39;test&#39;</span><span class="p">})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ConnectionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;所有服务器都不可用: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># 定期健康检查</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">periodic_health_check</span><span class="p">():</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">health_check</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>  <span class="c1"># 每30秒检查一次</span>
+
+<span class="n">health_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">periodic_health_check</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">health_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id11">
+<h2>消息重试和死信队列<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h2>
+<section id="id12">
+<h3>重试机制<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Puller</span><span class="p">,</span> <span class="n">Publisher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="ne">TimeoutError</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RetryablePuller</span><span class="p">(</span><span class="n">Puller</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;支持重试的任务拉取器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_retries&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retry_delay</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;retry_delay&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_letter_publisher</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_dead_letter_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">publisher</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;设置死信队列&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_letter_publisher</span> <span class="o">=</span> <span class="n">publisher</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_task_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_type</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册带重试的任务处理器&quot;&quot;&quot;</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">retry_wrapper</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+            <span class="n">retry_count</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_retry_count&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># 执行原始处理器</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">retry_count</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span><span class="p">:</span>
+                    <span class="c1"># 重试</span>
+                    <span class="n">task</span><span class="p">[</span><span class="s1">&#39;_retry_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">retry_count</span>
+                    <span class="n">task</span><span class="p">[</span><span class="s1">&#39;_last_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                    <span class="n">task</span><span class="p">[</span><span class="s1">&#39;_retry_at&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retry_delay</span> <span class="o">*</span> <span class="n">retry_count</span><span class="p">)</span>
+
+                    <span class="c1"># 延迟后重新推送任务</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retry_delay</span> <span class="o">*</span> <span class="n">retry_count</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_retry_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+                    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;retrying&#39;</span><span class="p">,</span> <span class="s1">&#39;retry_count&#39;</span><span class="p">:</span> <span class="n">retry_count</span><span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># 超过最大重试次数，发送到死信队列</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_letter_publisher</span><span class="p">:</span>
+                        <span class="n">dead_letter_task</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s1">&#39;original_task&#39;</span><span class="p">:</span> <span class="n">task</span><span class="p">,</span>
+                            <span class="s1">&#39;final_error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                            <span class="s1">&#39;retry_count&#39;</span><span class="p">:</span> <span class="n">retry_count</span><span class="p">,</span>
+                            <span class="s1">&#39;failed_at&#39;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                        <span class="p">}</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dead_letter_publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;dead_letter&#39;</span><span class="p">,</span> <span class="n">dead_letter_task</span><span class="p">)</span>
+
+                    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;failed&#39;</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="s1">&#39;retry_count&#39;</span><span class="p">:</span> <span class="n">retry_count</span><span class="p">}</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">register_task_handler</span><span class="p">(</span><span class="n">task_type</span><span class="p">,</span> <span class="n">retry_wrapper</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_retry_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;重新推送任务&quot;&quot;&quot;</span>
+        <span class="c1"># 这里需要一个推送器来重新发送任务</span>
+        <span class="c1"># 实际实现中可能需要更复杂的重试队列机制</span>
+        <span class="k">pass</span>
+
+<span class="c1"># 使用重试机制</span>
+<span class="n">puller</span> <span class="o">=</span> <span class="n">RetryablePuller</span><span class="p">(</span>
+    <span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://localhost:5557&quot;</span><span class="p">,</span>
+    <span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">retry_delay</span><span class="o">=</span><span class="mf">1.0</span>
+<span class="p">)</span>
+<span class="n">puller</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+<span class="c1"># 设置死信队列</span>
+<span class="n">dead_letter_publisher</span> <span class="o">=</span> <span class="n">Publisher</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;tcp://*:5559&quot;</span><span class="p">)</span>
+<span class="n">dead_letter_publisher</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">puller</span><span class="o">.</span><span class="n">set_dead_letter_queue</span><span class="p">(</span><span class="n">dead_letter_publisher</span><span class="p">)</span>
+
+<span class="c1"># 注册可能失败的任务处理器</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unreliable_handler</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.7</span><span class="p">:</span>  <span class="c1"># 70%的失败率</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;随机失败&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;success&#39;</span><span class="p">,</span> <span class="s1">&#39;processed&#39;</span><span class="p">:</span> <span class="n">task</span><span class="p">}</span>
+
+<span class="n">puller</span><span class="o">.</span><span class="n">register_task_handler</span><span class="p">(</span><span class="s1">&#39;unreliable_task&#39;</span><span class="p">,</span> <span class="n">unreliable_handler</span><span class="p">)</span>
+<span class="n">puller</span><span class="o">.</span><span class="n">start_worker</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id13">
+<h2>分布式锁<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h2>
+<section id="zeromq">
+<h3>基于ZeroMQ的分布式锁<a class="headerlink" href="#zeromq" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liberzmq.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">Server</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DistributedLock</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;分布式锁实现&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lock_server_address</span><span class="p">,</span> <span class="n">lock_name</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">lock_server_address</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock_name</span> <span class="o">=</span> <span class="n">lock_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquired</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取锁&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;acquire_lock&#39;</span><span class="p">,</span> <span class="p">{</span>
+                    <span class="s1">&#39;lock_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock_name</span><span class="p">,</span>
+                    <span class="s1">&#39;lock_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock_id</span><span class="p">,</span>
+                    <span class="s1">&#39;timeout&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+                <span class="p">})</span>
+
+                <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;acquired&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">acquired</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">blocking</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+                <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># 短暂等待后重试</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">blocking</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;释放锁&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquired</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock_id</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="s1">&#39;release_lock&#39;</span><span class="p">,</span> <span class="p">{</span>
+                    <span class="s1">&#39;lock_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock_name</span><span class="p">,</span>
+                    <span class="s1">&#39;lock_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock_id</span>
+                <span class="p">})</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">acquired</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LockServer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;锁服务器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">locks</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {lock_name: {&#39;lock_id&#39;: str, &#39;expires_at&#39;: float}}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="s1">&#39;acquire_lock&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acquire_lock</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="s1">&#39;release_lock&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_release_lock</span><span class="p">)</span>
+
+        <span class="c1"># 启动清理过期锁的线程</span>
+        <span class="n">cleanup_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_expired_locks</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cleanup_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">start_server</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_acquire_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">lock_name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lock_name&#39;</span><span class="p">]</span>
+        <span class="n">lock_id</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lock_id&#39;</span><span class="p">]</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;timeout&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="c1"># 检查锁是否存在且未过期</span>
+            <span class="k">if</span> <span class="n">lock_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">:</span>
+                <span class="n">existing_lock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">existing_lock</span><span class="p">[</span><span class="s1">&#39;expires_at&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">current_time</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;acquired&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;reason&#39;</span><span class="p">:</span> <span class="s1">&#39;lock_held&#39;</span><span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># 锁已过期，删除</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span>
+
+            <span class="c1"># 获取锁</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;lock_id&#39;</span><span class="p">:</span> <span class="n">lock_id</span><span class="p">,</span>
+                <span class="s1">&#39;expires_at&#39;</span><span class="p">:</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">timeout</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;acquired&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;lock_id&#39;</span><span class="p">:</span> <span class="n">lock_id</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_release_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">lock_name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lock_name&#39;</span><span class="p">]</span>
+        <span class="n">lock_id</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lock_id&#39;</span><span class="p">]</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lock_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">:</span>
+                <span class="n">existing_lock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">existing_lock</span><span class="p">[</span><span class="s1">&#39;lock_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">lock_id</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span>
+                    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;released&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;released&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;reason&#39;</span><span class="p">:</span> <span class="s1">&#39;lock_not_found_or_mismatch&#39;</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cleanup_expired_locks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;清理过期的锁&quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># 每5秒检查一次</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="n">expired_locks</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">lock_name</span><span class="p">,</span> <span class="n">lock_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">lock_info</span><span class="p">[</span><span class="s1">&#39;expires_at&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">current_time</span><span class="p">:</span>
+                        <span class="n">expired_locks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lock_name</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">lock_name</span> <span class="ow">in</span> <span class="n">expired_locks</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">locks</span><span class="p">[</span><span class="n">lock_name</span><span class="p">]</span>
+
+<span class="c1"># 使用分布式锁</span>
+<span class="c1"># 首先启动锁服务器（在单独的进程中）</span>
+<span class="c1"># lock_server = LockServer(&quot;tcp://*:5560&quot;)</span>
+<span class="c1"># lock_server.start()</span>
+
+<span class="c1"># 在客户端使用锁</span>
+<span class="k">with</span> <span class="n">DistributedLock</span><span class="p">(</span><span class="s2">&quot;tcp://localhost:5560&quot;</span><span class="p">,</span> <span class="s2">&quot;resource_1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">lock</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;获得锁，执行关键代码&quot;</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;释放锁&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id14">
+<h2>总结<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h2>
+<p>本指南介绍了LiberZMQ的高级功能，包括：</p>
+<ol class="arabic simple">
+<li><p><strong>自定义序列化器</strong>: 创建适合特定需求的序列化方案</p></li>
+<li><p><strong>数据校验</strong>: 集成Pydantic和Cerberus进行数据验证</p></li>
+<li><p><strong>中间件系统</strong>: 实现消息处理的横切关注点</p></li>
+<li><p><strong>连接池管理</strong>: 优化连接资源的使用</p></li>
+<li><p><strong>负载均衡</strong>: 实现客户端负载均衡和故障转移</p></li>
+<li><p><strong>重试机制</strong>: 处理临时故障和死信队列</p></li>
+<li><p><strong>分布式锁</strong>: 实现分布式环境下的资源同步</p></li>
+</ol>
+<p>这些高级功能可以帮助您构建更加健壮、高性能和可扩展的分布式系统。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2024, liber.
+      
+      |
+      <a href="_sources/advanced.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/liberalchang/liberzmq" class="github">
+        <img src="_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
