@@ -1,0 +1,298 @@
+/* LiberZMQ文档自定义样式 */
+
+/* 整体布局优化 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* 侧边栏样式优化 */
+div.sphinxsidebar {
+    width: 280px !important;
+    background-color: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* 侧边栏内容样式 */
+div.sphinxsidebar h3 {
+    background-color: #343a40;
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+div.sphinxsidebar ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+div.sphinxsidebar li {
+    border-bottom: 1px solid #e9ecef;
+}
+
+div.sphinxsidebar a {
+    display: block;
+    padding: 8px 15px;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+div.sphinxsidebar a:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+    text-decoration: none;
+}
+
+div.sphinxsidebar a.current {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+/* 导航树样式 */
+div.sphinxsidebar .toctree-l1 > a {
+    font-weight: bold;
+    background-color: #f1f3f4;
+}
+
+div.sphinxsidebar .toctree-l2 > a {
+    padding-left: 25px;
+    font-size: 14px;
+}
+
+div.sphinxsidebar .toctree-l3 > a {
+    padding-left: 40px;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+/* 主内容区域调整 */
+div.document {
+    margin-left: 0;
+    max-width: none;
+    padding: 0;
+}
+
+div.documentwrapper {
+    margin-left: 300px;
+    width: calc(100% - 300px);
+    padding: 20px;
+}
+
+div.bodywrapper {
+    margin: 0;
+}
+
+div.body {
+    max-width: none;
+    padding: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    div.sphinxsidebar {
+        width: 250px !important;
+    }
+    
+    div.documentwrapper {
+        margin-left: 270px;
+        width: calc(100% - 270px);
+    }
+}
+
+@media (max-width: 768px) {
+    div.sphinxsidebar {
+        position: relative;
+        width: 100% !important;
+        height: auto;
+        box-shadow: none;
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+        top: auto;
+        left: auto;
+    }
+    
+    div.documentwrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* 搜索框样式 */
+#searchbox {
+    background-color: white;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+#searchbox input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#searchbox input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+    width: 100%;
+}
+
+#searchbox input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* 内容区域样式优化 */
+h1, h2, h3, h4, h5, h6 {
+    color: #343a40;
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+h1 {
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 10px;
+}
+
+h2 {
+    border-bottom: 2px solid #6c757d;
+    padding-bottom: 5px;
+}
+
+/* 代码块样式 */
+div.highlight {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+div.highlight pre {
+    padding: 15px;
+    margin: 0;
+    overflow-x: auto;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 90%;
+}
+
+/* 表格样式 */
+table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+table.docutils th,
+table.docutils td {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+table.docutils th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* 警告和提示框样式 */
+div.admonition {
+    margin: 1em 0;
+    padding: 15px;
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+}
+
+div.admonition.warning {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+div.admonition.error {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+div.admonition.note {
+    border-left-color: #17a2b8;
+    background-color: #d1ecf1;
+}
+
+/* 页脚样式 */
+div.footer {
+    margin-left: 300px;
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    div.footer {
+        margin-left: 0;
+    }
+}
+
+/* 面包屑导航 */
+div.related {
+    background-color: #343a40;
+    color: white;
+    padding: 10px 20px;
+    margin-left: 300px;
+}
+
+div.related a {
+    color: #adb5bd;
+    text-decoration: none;
+}
+
+div.related a:hover {
+    color: white;
+}
+
+@media (max-width: 768px) {
+    div.related {
+        margin-left: 0;
+    }
+}
+
+/* 滚动条样式 */
+div.sphinxsidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+div.sphinxsidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+div.sphinxsidebar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+div.sphinxsidebar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
